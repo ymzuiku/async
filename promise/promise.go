@@ -3,6 +3,7 @@ package promise
 import (
 	"fmt"
 	"sync"
+	"sync/atomic"
 
 	"github.com/pkg/errors"
 )
@@ -14,9 +15,8 @@ import (
 type Promise[T any] struct {
 	res     T
 	err     error
-	pending bool
-	mu      *sync.Mutex
 	wg      *sync.WaitGroup
+	pending uint32
 }
 
 // 创建一个 Promise 对象
@@ -31,8 +31,7 @@ func New[T any](exec func(resolve func(T), reject func(error))) *Promise[T] {
 		panic("executor cannot be nil")
 	}
 	p := &Promise[T]{
-		pending: true,
-		mu:      &sync.Mutex{},
+		pending: 0,
 		wg:      &sync.WaitGroup{},
 	}
 	p.wg.Add(1)
@@ -45,28 +44,21 @@ func New[T any](exec func(resolve func(T), reject func(error))) *Promise[T] {
 }
 
 func (p *Promise[T]) resolve(res T) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	if !p.pending {
+	if atomic.LoadUint32(&p.pending) > 0 {
 		return
 	}
-
+	atomic.AddUint32(&p.pending, 1)
 	p.res = res
-	p.pending = false
-
 	p.wg.Done()
+
 }
 
 func (p *Promise[T]) reject(err error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	if !p.pending {
+	if atomic.LoadUint32(&p.pending) > 0 {
 		return
 	}
+	atomic.AddUint32(&p.pending, 1)
 	p.err = err
-	p.pending = false
 	p.wg.Done()
 }
 
@@ -106,35 +98,6 @@ func (p *Promise[T]) Catch(rejection func(err error) error) *Promise[T] {
 	})
 }
 
-func Resolve[T any](resolution T) *Promise[T] {
-	return &Promise[T]{
-		res:     resolution,
-		pending: false,
-		mu:      &sync.Mutex{},
-		wg:      &sync.WaitGroup{},
-	}
-}
-
-func Reject[T any](err error) *Promise[T] {
-	return &Promise[T]{
-		err:     err,
-		pending: false,
-		mu:      &sync.Mutex{},
-		wg:      &sync.WaitGroup{},
-	}
-}
-
-// func Then[T, O any](p *Promise[T], resolveA func(data T) O) *Promise[O] {
-// 	return New(func(resolve func(O), reject func(error)) {
-// 		res, err := p.Await()
-// 		if err != nil {
-// 			reject(err)
-// 			return
-// 		}
-// 		resolve(resolveA(res))
-// 	})
-// }
-
 type tuple[D, I any] struct {
 	data  D
 	index I
@@ -155,10 +118,10 @@ func All[T any](promises ...*Promise[T]) *Promise[[]T] {
 		length := len(promises)
 		valsCh := make(chan tuple[T, int], length)
 		errsCh := make(chan error, 1)
-		for idx, p := range promises {
-			idx := idx
+		for i, p := range promises {
+			i := i
 			_ = p.Then(func(data T) T {
-				valsCh <- tuple[T, int]{data: data, index: idx}
+				valsCh <- tuple[T, int]{data: data, index: i}
 				return data
 			})
 			_ = p.Catch(func(err error) error {
@@ -168,7 +131,7 @@ func All[T any](promises ...*Promise[T]) *Promise[[]T] {
 		}
 
 		resolutions := make([]T, length)
-		for idx := 0; idx < length; idx++ {
+		for i := 0; i < length; i++ {
 			select {
 			case val := <-valsCh:
 				resolutions[val.index] = val.data
