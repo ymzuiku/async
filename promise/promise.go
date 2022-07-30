@@ -7,6 +7,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Promise
+//
+// fork 自: https://github.com/chebyrash/promise
+// 差异: Promise.Then 改为 : \*promise.Then
 type Promise[T any] struct {
 	res     T
 	err     error
@@ -15,6 +19,13 @@ type Promise[T any] struct {
 	wg      *sync.WaitGroup
 }
 
+// New
+//
+// 创建一个 Promise 对象
+// 1. 创建一个 waitGroup
+// 2. 立刻以 gorouting 执行 exec
+// 3. Await 执行后设置 waitGroup 为 wait
+// 4. exec 中的 resolve 执行之后设置 waitGroup 为 done
 func New[T any](exec func(resolve func(T), reject func(error))) *Promise[T] {
 	if exec == nil {
 		panic("executor cannot be nil")
@@ -129,6 +140,11 @@ type tuple[D, I any] struct {
 	index I
 }
 
+// All
+//
+// 等待所有 Promise 执行
+// - 若遇到错误则返回错误
+// - 若无错误, 等待所有 Promise 结束, 返回结果为数组
 func All[T any](promises ...*Promise[T]) *Promise[[]T] {
 	if len(promises) == 0 {
 		return nil
@@ -165,6 +181,10 @@ func All[T any](promises ...*Promise[T]) *Promise[[]T] {
 	})
 }
 
+// Race
+//
+// 等待所有 Promise 执行
+// - 任何一个 Promise 先结束就返回, 返回值是结果或失败
 func Race[T any](promises ...*Promise[T]) *Promise[T] {
 	if len(promises) == 0 {
 		return nil
@@ -193,6 +213,11 @@ func Race[T any](promises ...*Promise[T]) *Promise[T] {
 	})
 }
 
+// Any
+//
+// 等待所有 Promise 执行
+// - 任何一个 Promise 成功, 立刻返回
+// - 若遇到失败, 记录失败, 若有多个失败会进行包裹
 func Any[T any](promises ...*Promise[T]) *Promise[T] {
 	if len(promises) == 0 {
 		return nil
