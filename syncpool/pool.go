@@ -25,3 +25,7 @@ func (s *Pool[T]) Put(obj *T) {
 	*obj = s.empty
 	s.pool.Put(obj)
 }
+
+func (s *Pool[T]) Empty(obj *T) {
+	*obj = s.empty
+}
