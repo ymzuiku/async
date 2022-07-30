@@ -39,11 +39,53 @@ func TestMemoPoolIsEmpty(t *testing.T) {
 	}
 }
 
+type Join struct {
+	Table        string         `json:"table" validate:"required"`
+	Where        map[string]any `json:"where"`
+	On           []string       `json:"on" validate:"required"`
+	Comparable   [][]any        `json:"comparable"`
+	AllowColumns []string       `json:"allowColumns"`
+	Sensitives   []string       `json:"sensitives"`
+}
+
+type Read struct {
+	LoadHardDelete bool           `json:"loadHardDelete"`
+	Limit          int            `json:"limit"`
+	Offset         int            `json:"offset"`
+	Where          map[string]any `json:"where"`
+	Id             string         `json:"id"`
+	Ids            []any          `json:"ids"`
+	Order          string         `json:"order"`
+	Desc           bool           `json:"desc"`
+	Total          bool           `json:"total"`
+	Join           Join           `json:"join"`
+	Join2          *Join          `json:"join2"`
+	AllowColumns   []string       `json:"allowColumns"`
+	Sensitives     []string       `json:"sensitives"`
+	Comparable     [][]any        `json:"comparable"` // 可比较的
+}
+
+var readPool = syncpool.New[Read]()
+var studentPool = syncpool.New[Student]()
+
 func TestMemoIsEmpty(t *testing.T) {
-	var studentPool = syncpool.New[Student]()
 	s := studentPool.Get()
 	s.Name = "dog"
 	assert.NotEmpty(t, s)
 	studentPool.Empty(s)
 	assert.Empty(t, s)
+
+	r := readPool.Get()
+	r.Join = Join{
+		Table: "aaaaaa",
+	}
+	r.Where = map[string]any{"aaa": 2}
+	r.Join2 = &Join{
+		Table: "aaaaaa",
+	}
+	r.Sensitives = []string{"aaa"}
+
+	assert.NotEmpty(t, r)
+	readPool.Empty(r)
+	assert.Empty(t, r)
 }
