@@ -2,14 +2,14 @@
 
 安全的使用异步库
 
-## sync.pool
+## poolx
 
 ```go
 type Dog struct {
   Name string
   Age int
 }
-var pool = syncpool.New[Dog]()
+var pool = poolx.New[Dog]()
 
 func main(){
   dog := pool.Get()
