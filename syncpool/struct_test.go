@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/ymzuiku/async/syncpool"
 )
@@ -40,30 +41,52 @@ func TestMemoPoolIsEmpty(t *testing.T) {
 }
 
 type Join struct {
-	Table        string         `json:"table" validate:"required"`
-	Where        map[string]any `json:"where"`
-	On           []string       `json:"on" validate:"required"`
-	Comparable   [][]any        `json:"comparable"`
-	AllowColumns []string       `json:"allowColumns"`
-	Sensitives   []string       `json:"sensitives"`
+	Table        string
+	Where        map[string]any
+	On           []string
+	Comparable   [][]any
+	AllowColumns []string
+	Sensitives   []string
 }
 
 type Read struct {
-	LoadHardDelete bool           `json:"loadHardDelete"`
-	Limit          int            `json:"limit"`
-	Offset         int            `json:"offset"`
-	Where          map[string]any `json:"where"`
-	Id             string         `json:"id"`
-	Ids            []any          `json:"ids"`
-	Order          string         `json:"order"`
-	Desc           bool           `json:"desc"`
-	Total          bool           `json:"total"`
-	Join           Join           `json:"join"`
-	Join2          *Join          `json:"join2"`
-	AllowColumns   []string       `json:"allowColumns"`
-	Sensitives     []string       `json:"sensitives"`
-	Comparable     [][]any        `json:"comparable"` // 可比较的
+	LoadHardDelete bool
+	Limit          int
+	Offset         int
+	Where          map[string]any
+	Id             string
+	Ids            []any
+	Order          string
+	Order1         string
+	Order2         string
+	Order3         string
+	Order4         string
+	Order5         string
+	Order6         string
+	Order7         string
+	Order8         string
+	Order9         string
+	Order10        string
+	Order11        string
+	Order12        string
+	Order13        string
+	Order14        string
+	Desc           bool
+	Total          bool
+	Join           Join
+	Join2          *Join
+	AllowColumns   []string
+	Sensitives     []string
+	Comparable     [][]any
 }
+
+type Student struct {
+	Name string
+	Age  int
+	List [1000]string
+}
+
+var key = uuid.NewString()
 
 var readPool = syncpool.New[Read]()
 var studentPool = syncpool.New[Student]()
