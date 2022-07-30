@@ -28,12 +28,22 @@ fork 自: https://github.com/chebyrash/promise
 差异: Promise.Then 改为 : \*promise.Then
 
 ```go
-p := promise.New(func(resolve func(int), _ func(error)) {
-	factorial := findFactorial(10)
-	resolve(factorial)
-})
+func findFactorial(n int) int {
+	if n == 1 {
+		return 1
+	}
+	return n * findFactorial(n-1)
+}
 
-num, err := p.Await()
-assert.ErrorIs(t, err, nil)
-assert.Greater(t, num, 0)
+func main(){
+  p := promise.New(func(resolve func(int), _ func(error)) {
+  	factorial := findFactorial(10)
+  	resolve(factorial)
+  })
+
+  num, err := p.Await()
+  assert.ErrorIs(t, err, nil)
+  assert.Greater(t, num, 0)
+}
+
 ```

@@ -37,5 +37,4 @@ func TestPromise(t *testing.T) {
 	assert.ErrorIs(t, err, nil)
 	assert.Len(t, nums, 2)
 	assert.Greater(t, nums[1], 100)
-	assert.True(t, false)
 }
