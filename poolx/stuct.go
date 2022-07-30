@@ -5,19 +5,19 @@ import (
 	"sync"
 )
 
-// Pool
-//
 // sync.Pool 的包裹
 type Pool[T any] struct {
 	empty T
 	pool  sync.Pool
 }
 
-// New
-//
 // 创建一个 sync.Pool 对象
-// - 利用了泛型减少了很多模版代码, 如类型断言和获取
-// - Put的时候自动清空数据
+//
+//
+/*
+ - 利用了泛型减少了很多模版代码, 如类型断言和获取
+ - Put的时候自动清空数据
+*/
 func New[T any]() Pool[T] {
 	return Pool[T]{
 		pool: sync.Pool{
